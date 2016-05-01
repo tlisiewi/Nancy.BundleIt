@@ -38,7 +38,7 @@ namespace Nancy.BundleIt
         internal Dictionary<string, string> _style_tag_bundles = new Dictionary<string, string>();
         internal Dictionary<string, BundleAsset> _script_compressed_bundles = new Dictionary<string, BundleAsset>();
         internal Dictionary<string, BundleAsset> _style_compressed_bundles = new Dictionary<string, BundleAsset>();
-        
+
         public Bundle AddScripts(string bundlename, List<BundleItFile> files)
         {
             bundlename = bundlename.ToUpper();
@@ -83,7 +83,7 @@ namespace Nancy.BundleIt
 
                 return _style_tag_bundles[n];
             }
-            
+
             return string.Empty;
         }
 
@@ -130,7 +130,7 @@ namespace Nancy.BundleIt
                 var bundlefiles = _script_files.Where(f => f.bundle_name == bname).ToList();
                 bundlestring = new StringBuilder();
                 LoadDebugBundles(bname, bundlefiles, bundlestring, eBundleType.script);
-                _script_tag_bundles.Add(bname, bundlestring.ToString());
+                AddOrUpdateDictionary(bname, bundlestring.ToString(), _script_tag_bundles);
             }
 
             // styles
@@ -140,7 +140,7 @@ namespace Nancy.BundleIt
                 var bundlefiles = _style_files.Where(f => f.bundle_name == bname).ToList();
                 bundlestring = new StringBuilder();
                 LoadDebugBundles(bname, bundlefiles, bundlestring, eBundleType.style);
-                _style_tag_bundles.Add(bname, bundlestring.ToString());
+                AddOrUpdateDictionary(bname, bundlestring.ToString(), _style_tag_bundles);
             }
 
         }
@@ -150,7 +150,8 @@ namespace Nancy.BundleIt
             foreach (var s in files)
             {
                 // load referenced bundle files
-                if(!string.IsNullOrEmpty(s.bundle_ref_name)){
+                if (!string.IsNullOrEmpty(s.bundle_ref_name))
+                {
 
                     // get files by bundle name
                     List<BundleItFile> refbundlefiles = null;
@@ -164,14 +165,14 @@ namespace Nancy.BundleIt
                 }
                 else
                 {
-                    if(type == eBundleType.script)
+                    if (type == eBundleType.script)
                         bundlestring.Append(string.Format(_script_tag_standard_template, s.debugrelativepath) + "\n");
-                    
-                    if(type == eBundleType.style)
+
+                    if (type == eBundleType.style)
                         bundlestring.Append(string.Format(_style_tag_standard_template, s.debugrelativepath) + "\n");
 
                 }
-                    
+
             }
         }
 
@@ -189,10 +190,10 @@ namespace Nancy.BundleIt
 
                 // check for cdn's
                 SplitBundlesWithCDNs(BundleResolvedFiles);
-                
+
                 // generate release bundles
                 GenerateReleaseBundles(BundleResolvedFiles, eBundleType.script);
-                
+
                 // generate bundle tags
                 GenerateReleaseBundleTags(BundleResolvedFiles, eBundleType.script);
             }
@@ -214,7 +215,7 @@ namespace Nancy.BundleIt
                 // generate bundle tags
                 GenerateReleaseBundleTags(BundleResolvedFiles, eBundleType.style);
             }
-            
+
         }
 
         void LoadReleaseBundles(string bundlename, List<BundleItFile> files, List<BundleItFile> bundle_resolved_files, eBundleType type)
@@ -265,7 +266,7 @@ namespace Nancy.BundleIt
                     f.sub_bundle_num = i;
                     prevsub = i;
                 }
-                      
+
             }
         }
 
@@ -341,7 +342,7 @@ namespace Nancy.BundleIt
             {
                 tags = new StringBuilder();
                 var unique_resolved_bundles = BundleResolvedFiles.Where(b => b.bundle_name == bundle.bundle_name).DistinctBy(b2 => b2.resolved_bundle_name);
-                
+
                 foreach (var rbundle in unique_resolved_bundles)
                 {
                     if (rbundle.IsCDN)
@@ -360,19 +361,20 @@ namespace Nancy.BundleIt
                 }
 
                 if (type == eBundleType.script)
-                    _script_tag_bundles.Add(bundle.bundle_name, tags.ToString());
+                    AddOrUpdateDictionary(bundle.bundle_name, tags.ToString(), _script_tag_bundles);
 
                 if (type == eBundleType.style)
-                    _style_tag_bundles.Add(bundle.bundle_name, tags.ToString());
+                    AddOrUpdateDictionary(bundle.bundle_name, tags.ToString(), _style_tag_bundles);
             }
         }
 
         string LoadFile(string filepath)
         {
 
-            if(!File.Exists(filepath)){
+            if (!File.Exists(filepath))
+            {
 
-                if(ConfigSettings.Instance.ThrowExceptionWhenFileMissing)
+                if (ConfigSettings.Instance.ThrowExceptionWhenFileMissing)
                     throw new FileNotFoundException("Could not find file '" + filepath + "'.", filepath);
                 else
                     return string.Empty;
@@ -398,7 +400,7 @@ namespace Nancy.BundleIt
 
                 return jscompressor.Compress(filesource);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 var msg = ex.Message;
                 return filesource;
@@ -423,6 +425,16 @@ namespace Nancy.BundleIt
             }
         }
 
-        
+        private void AddOrUpdateDictionary(string key, string value, Dictionary<string, string> dictionary)
+        {
+            if (dictionary.ContainsKey(key))
+            {
+                dictionary[key] = value;
+            }
+            else
+            {
+                dictionary.Add(key, value);
+            }
+        }
     }
 }
